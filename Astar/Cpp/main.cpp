@@ -11,12 +11,11 @@ using namespace std;
 
 typedef struct NODE
 {
-    int x, y;    // 节点所在位置
-    int F, G, H; // G:从起点开始，沿着产的路径，移动到网格上指定方格的移动耗费。
-        // H:从网格上那个方格移动到终点B的预估移动耗费，使用曼哈顿距离。
-        // F = G + H
+    int x, y;    // 节点位置
+    int F, G, H; // G为离起点的距离；H为预估的离终点的距离；F = G + H代表总花费
     NODE(int a, int b) { x = a, y = b; }
-    // 重载操作符，使优先队列以F值大小为标准维持堆
+
+    // 重载操作符，使优先队列以F值大小为标准维持堆（先比F再比G）
     bool operator<(const NODE &a) const
     {
         return F == a.F ? G > a.G : F > a.F;
@@ -24,10 +23,10 @@ typedef struct NODE
 } Node;
 
 // 定义方向
-//const int next_position[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
-const int next_position[4][2] = {{-1, 0}, {0, -1}, {0, 1}, {1, 0}};
+//const int next_position[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};//8方向
+const int next_position[4][2] = {{-1, 0}, {0, -1}, {0, 1}, {1, 0}};  //4方向
 priority_queue<Node> open; // 优先队列，就相当于open表
-// 棋盘
+// 地图
 int map[N][N] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
                  {0, 1, 0, 0, 0, 0, 0, 1, 0, 0},
                  {0, 0, 1, 1, 0, 0, 0, 1, 0, 0},
@@ -40,7 +39,7 @@ int map[N][N] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
                  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 bool close[N][N]; // 访问情况记录，close列表
 int valueF[N][N]; // 记录每个节点对应的F值
-int pre[N][N][2]; // 存储每个节点的父节点
+int pre[N][N][2]; // 存储每个节点的父节点，方便找到终点后返回路径
 
 int Manhattan(int x, int y, int x1, int y1)
 {
@@ -53,9 +52,8 @@ bool isValidNode(int x, int y, int xx, int yy)
         return false; // 判断边界
     if (map[x][y] == 1)
         return false; // 判断障碍物
-    // 两节点成对角型且它们的公共相邻节点存在障碍物，在8方向时用
     if (x != xx && y != yy && (map[x][yy] == 1 || map[xx][y] == 1))
-        return false;
+        return false;    // 两节点成对角型且它们的公共相邻节点存在障碍物，在8方向时用
     return true;
 }
 
@@ -71,8 +69,8 @@ void Astar(int x0, int y0, int x1, int y1)
 
     while (!open.empty())
     {
-        Node node_current = open.top();                   //取优先队列头元素，即周围单元格中代价最小的点
-        open.pop();                                       //从open列表中移除
+        Node node_current = open.top();                   // 取优先队列头元素，即周围单元格中代价最小的点
+        open.pop();                                       // 从open列表中移除
         close[node_current.x][node_current.y] = true;     // 访问该点，加入close列表
         if (node_current.x == x1 && node_current.y == y1) // 到达终点
             break;
@@ -139,7 +137,7 @@ int main(int argc, char *argv[])
     fill(valueF[0], valueF[0] + N * N, 0);      // 初始化F全为0
     fill(pre[0][0], pre[0][0] + N * N * 2, -1); // 路径同样赋初值-1
 
-    //  // 起点 // 终点
+    // 起点终点
     int x0 = 2, y0 = 4, x1 = 8, y1 = 6;
 
     // printf("input start: ");
